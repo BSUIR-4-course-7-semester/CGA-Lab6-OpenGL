@@ -13,6 +13,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 void handleKeyLeftPress();
 void handleKeyRightPress();
@@ -49,7 +50,6 @@ void* handleError(int code, char* description) {
 
 void handleKeyboardEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	//if (action == GLFW_KEY_DOWN) {
 		switch (key) {
 			case GLFW_KEY_X: {
 				operations.axis = X;
@@ -84,8 +84,6 @@ void handleKeyboardEvent(GLFWwindow* window, int key, int scancode, int action, 
 				break;
 			}
 		}
-	//}
-
 }
 
 void handleKeyLeftPress() {
@@ -168,6 +166,59 @@ void handleKeyRightPress() {
 	}
 }
 
+void writeToFileCoordintates(Coordinates* coordinates, char* filename) {
+	FILE* f;
+	fopen_s(&f, filename, "w");
+
+	for (int i = 0; i < coordinates->count; i++) {
+		fprintf_s(f, "%.5f ", coordinates->values[i]);
+	}
+
+	fclose(f);
+}
+
+Coordinates* calculateNormalsAndToVerticesArray(Coordinates* coordinates) {
+	Coordinates* resultCoordinates = (Coordinates*)malloc(sizeof(Coordinates));
+	resultCoordinates->count = coordinates->count * 2;
+	resultCoordinates->values = (float*)malloc(sizeof(float) * resultCoordinates->count);
+
+	for (int i = 0; i < coordinates->count / 3; i++) {
+		int idx = i * 2 * 3;
+		resultCoordinates->values[idx] = coordinates->values[i * 3];
+		resultCoordinates->values[idx + 1] = coordinates->values[i * 3 + 1];
+		resultCoordinates->values[idx + 2] = coordinates->values[i * 3 + 2];
+	}
+
+	glm::vec3 normal = glm::vec3(.0f, .0f, .0f);
+
+	for (int i = 0; i < coordinates->count / 3 - 1;) {
+		glm::vec3 a = glm::vec3(coordinates->values[i * 3], coordinates->values[i * 3 + 1], coordinates->values[i * 3 + 2]);
+		glm::vec3 b = glm::vec3(coordinates->values[i * 3 + 3], coordinates->values[i * 3 + 4], coordinates->values[i * 3 + 5]);
+		glm::vec3 c = glm::vec3(coordinates->values[i * 3 + 6], coordinates->values[i * 3 + 7], coordinates->values[i * 3 + 8]);
+		
+		glm::vec3 normal = glm::cross(b - a, c - a);
+		normal = normal / glm::length(normal);
+		//normal = glm::abs(normal);
+
+		int idx = (i++ * 2 + 1) * 3;
+		resultCoordinates->values[idx] = normal.x;
+		resultCoordinates->values[idx + 1] = normal.y;
+		resultCoordinates->values[idx + 2] = normal.z;
+
+		idx = (i++ * 2 + 1) * 3;
+		resultCoordinates->values[idx] = normal.x;
+		resultCoordinates->values[idx + 1] = normal.y;
+		resultCoordinates->values[idx + 2] = normal.z;
+
+		idx = (i++ * 2 + 1) * 3;
+		resultCoordinates->values[idx] = normal.x;
+		resultCoordinates->values[idx + 1] = normal.y;
+		resultCoordinates->values[idx + 2] = normal.z;
+	}
+
+	return resultCoordinates;
+}
+
 int main()
 {
 	setlocale(LC_ALL, "Russian");
@@ -175,14 +226,7 @@ int main()
 	LadderGenerator* ladder_generator = new LadderGenerator(1, 1, 1, 3);
 	Coordinates* coordinates = ladder_generator->generate();
 
-	FILE* f;
-	fopen_s(&f, "result.txt", "w");
-
-	for (int i = 0; i < coordinates->count; i++) {
-		fprintf_s(f, "%.5f,", coordinates->values[i]);
-	}
-
-	fclose(f);
+	writeToFileCoordintates(coordinates, "result.txt");
 
 	glfwInit();
 
@@ -192,8 +236,8 @@ int main()
 
 	glfwSetErrorCallback((GLFWerrorfun)handleError);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Practice", nullptr, nullptr);
-	if (window == nullptr)
+	GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Practice", NULL, NULL);
+	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
@@ -207,7 +251,10 @@ int main()
 		std::cout << "Failed to initialize GLEW" << std::endl;
 		return -1;
 	}
-
+/*
+	coordinates = calculateNormalsAndToVerticesArray(coordinates);
+	writeToFileCoordintates(coordinates, "result1.txt");
+*/
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
@@ -219,17 +266,29 @@ int main()
 	
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
-
 	glViewport(0, 0, width, height);
 
 	GLuint programID = LoadShaders("SimpleVertexShader.glsl", "SimpleFragmentShader.glsl");
 
-	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+	GLuint modelID = glGetUniformLocation(programID, "model");
+	GLuint viewID = glGetUniformLocation(programID, "view");
+	GLuint projectionID = glGetUniformLocation(programID, "projection");
+
+	GLint lightPosID = glGetUniformLocation(programID, "lightPos");
+	glUniform3f(lightPosID, 15, 10, 5);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
 	glfwSetKeyCallback(window, handleKeyboardEvent);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -239,13 +298,11 @@ int main()
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Проекционная матрица : 45deg; поле обзора, 4:3 соотношение сторон, диапазон : 0.1 юнит <-> 100 юнитов
 		glm::mat4 Projection = glm::perspective(glm::radians(90.0f), 4.0f / 3.0f, 0.1f, 100.0f);
-		// Матрица камеры
 		glm::mat4 View = glm::lookAt(
-			glm::vec3(10, 10, 10), // Камера находится в мировых координатах (4,3,3)
+			glm::vec3(10, 10, 10), // Камера находится в мировых координатах
 			glm::vec3(0, 0, 0), // И направлена в начало координат
-			glm::vec3(0, 1, 0)  // "Голова" находится сверху
+			glm::vec3(0, 1, 0)  // Голова" находится сверху
 		);
 		// Матрица модели : единичная матрица (Модель находится в начале координат)
 		glm::mat4 Model = glm::translate(glm::mat4(), glm::vec3(transformOptions.dx, transformOptions.dy, transformOptions.dz));
@@ -257,17 +314,13 @@ int main()
 		// Итоговая матрица ModelViewProjection, которая является результатом перемножения наших трех матриц
 		glm::mat4 MVP = Projection * View * Model;
 
-		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
+		glUniformMatrix4fv(modelID, 1, GL_FALSE, glm::value_ptr(Model));
+		glUniformMatrix4fv(viewID, 1, GL_FALSE, glm::value_ptr(View));
+		glUniformMatrix4fv(projectionID, 1, GL_FALSE, glm::value_ptr(Projection));
 
 		glUseProgram(programID);
 
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 		glDrawArrays(GL_TRIANGLES, 0, coordinates->count / 3);
-		
-		glDisableVertexAttribArray(0);
 	}
 
 	return 0;

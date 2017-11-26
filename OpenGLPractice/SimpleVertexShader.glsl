@@ -1,10 +1,17 @@
 #version 330 core
 
-layout (location = 0) in vec3 vertexPosition_modelspace;
+layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
-uniform mat4 MVP;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+out vec3 FragPos;
+out vec3 Normal;
 
 void main() {
-	vec4 v = vec4(vertexPosition_modelspace, 1);
-    gl_Position = MVP * v;
+    gl_Position = projection * view * model * vec4(position, 1);
+	FragPos = vec3(model * vec4(position, 1));
+	Normal = normal;
 }
