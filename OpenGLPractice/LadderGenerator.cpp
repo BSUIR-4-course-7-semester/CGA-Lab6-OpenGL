@@ -36,18 +36,18 @@ void LadderGenerator::generate_base()
 	float z = this->center_z - ladder_height / 2;
 
 	this->add_point(left_x, top_y, z);
-	this->add_point(0.0f, 0.0f, -1.0f);
+	this->add_point(0.0f, 0.0f, 1.0f);
 	this->add_point(right_x, top_y, z);
-	this->add_point(0.0f, 0.0f, -1.0f);
+	this->add_point(0.0f, 0.0f, 1.0f);
 	this->add_point(right_x, bottom_y, z);
-	this->add_point(0.0f, 0.0f, -1.0f);
+	this->add_point(0.0f, 0.0f, 1.0f);
 
 	this->add_point(right_x, bottom_y, z);
-	this->add_point(0.0f, 0.0f, -1.0f);
+	this->add_point(0.0f, 0.0f, 1.0f);
 	this->add_point(left_x, bottom_y, z);
-	this->add_point(0.0f, 0.0f, -1.0f);
+	this->add_point(0.0f, 0.0f, 1.0f);
 	this->add_point(left_x, top_y, z);
-	this->add_point(0.0f, 0.0f, -1.0f);
+	this->add_point(0.0f, 0.0f, 1.0f);
 }
 
 void LadderGenerator::generate_back()
@@ -121,18 +121,18 @@ void LadderGenerator::generate_steps()
 		add_point(0.0f, -1.0f, 0.0f);
 
 		add_point(left_x, front_y, top_z);
-		add_point(-1.0f, 0.0f, 0.0f);
+		add_point(1.0f, 0.0f, 0.0f);
 		add_point(left_x, back_y, top_z);
-		add_point(-1.0f, 0.0f, 0.0f);
+		add_point(1.0f, 0.0f, 0.0f);
 		add_point(left_x, back_y, bottom_z);
-		add_point(-1.0f, 0.0f, 0.0f);
+		add_point(1.0f, 0.0f, 0.0f);
 
 		add_point(left_x, front_y, top_z);
-		add_point(-1.0f, 0.0f, 0.0f);
+		add_point(1.0f, 0.0f, 0.0f);
 		add_point(left_x, front_y, bottom_z);
-		add_point(-1.0f, 0.0f, 0.0f);
+		add_point(1.0f, 0.0f, 0.0f);
 		add_point(left_x, back_y, bottom_z);
-		add_point(-1.0f, 0.0f, 0.0f);
+		add_point(1.0f, 0.0f, 0.0f);
 
 		add_point(right_x, front_y, top_z);
 		add_point(-1.0f, 0.0f, 0.0f);

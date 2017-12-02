@@ -223,7 +223,7 @@ int main()
 {
 	setlocale(LC_ALL, "Russian");
 
-	LadderGenerator* ladder_generator = new LadderGenerator(1, 1, 1, 3);
+	LadderGenerator* ladder_generator = new LadderGenerator(1, 1, 1, 10);
 	Coordinates* coordinates = ladder_generator->generate();
 
 	writeToFileCoordintates(coordinates, "result.txt");
@@ -274,8 +274,11 @@ int main()
 	GLuint viewID = glGetUniformLocation(programID, "view");
 	GLuint projectionID = glGetUniformLocation(programID, "projection");
 
+	GLint viewPosLoc = glGetUniformLocation(programID, "viewPos");
+	glUniform3f(viewPosLoc, 1, 1, 100);
+
 	GLint lightPosID = glGetUniformLocation(programID, "lightPos");
-	glUniform3f(lightPosID, 15, 10, 5);
+	glUniform3f(lightPosID, 100, 100, 100);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
