@@ -18,12 +18,13 @@
 void handleKeyLeftPress();
 void handleKeyRightPress();
 
-enum TransformOperation { SCALING, TRANSLATING, ROTATING };
+enum TransformOperation { SCALING, TRANSLATING, ROTATING, SHININESS_CHANGING };
 enum Axis { X, Y, Z };
 
 const float D_TRANSLATING = 0.1f;
 const float D_ROTATING = 5.0f;
 const float D_SCALING = 0.5f;
+const float D_SHININESS = 1.5f;
 
 struct {
 	float dx = 0;
@@ -34,6 +35,13 @@ struct {
 	float zAngle = 0;
 	float scale = 1;
 } transformOptions;
+
+struct {
+	float shininess = 32.0f;
+	glm::vec3 ambient = glm::vec3(1.0f, 0.5f, 0.31f);
+	glm::vec3 diffuse = glm::vec3(1.0f, 0.5f, 0.31f);
+	glm::vec3 specular = glm::vec3(0.5f, 0.5f, 0.5f);
+} materialOptions;
 
 struct {
 	Axis axis = X;
@@ -61,6 +69,10 @@ void handleKeyboardEvent(GLFWwindow* window, int key, int scancode, int action, 
 			}
 			case GLFW_KEY_Z: {
 				operations.axis = Z;
+				break;
+			}
+			case GLFW_KEY_H: {
+				operations.operation = SHININESS_CHANGING;
 				break;
 			}
 			case GLFW_KEY_T: {
@@ -124,6 +136,9 @@ void handleKeyLeftPress() {
 	if (operations.operation == SCALING) {
 		transformOptions.scale -= D_SCALING;
 	}
+	if (operations.operation == SHININESS_CHANGING) {
+		materialOptions.shininess -= D_SHININESS;
+	}
 }
 
 void handleKeyRightPress() {
@@ -163,6 +178,9 @@ void handleKeyRightPress() {
 	}
 	if (operations.operation == SCALING) {
 		transformOptions.scale += D_SCALING;
+	}
+	if (operations.operation == SHININESS_CHANGING) {
+		materialOptions.shininess += D_SHININESS;
 	}
 }
 
@@ -275,10 +293,15 @@ int main()
 	GLuint projectionID = glGetUniformLocation(programID, "projection");
 
 	GLint viewPosLoc = glGetUniformLocation(programID, "viewPos");
-	glUniform3f(viewPosLoc, 1, 1, 100);
+	glUniform3f(viewPosLoc, 100, 100, 100);
 
 	GLint lightPosID = glGetUniformLocation(programID, "lightPos");
 	glUniform3f(lightPosID, 100, 100, 100);
+
+	GLint materialAmbientID = glGetUniformLocation(programID, "materialAmbient");
+	GLint materialDiffuseID = glGetUniformLocation(programID, "materialDiffuse");
+	GLint materialSpecularID = glGetUniformLocation(programID, "materialSpecular");
+	GLint materialShininessID = glGetUniformLocation(programID, "materialShininess");
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
@@ -295,6 +318,11 @@ int main()
 
 	while (!glfwWindowShouldClose(window))
 	{
+		glUniform3f(materialAmbientID, materialOptions.ambient.x, materialOptions.ambient.y, materialOptions.ambient.z);
+		glUniform3f(materialDiffuseID, materialOptions.diffuse.x, materialOptions.diffuse.y, materialOptions.diffuse.z);
+		glUniform3f(materialSpecularID, materialOptions.specular.x, materialOptions.specular.y, materialOptions.specular.z);
+		glUniform1f(materialShininessID, materialOptions.shininess);
+
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 
